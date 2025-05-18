@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  file-service:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    ports:
+      - "3100:3100"
+    environment:
+      - PORT=3100
+    networks:
+      - app-network
+
+  report-service:
+    build:
+      context: ./report-service
+      dockerfile: Dockerfile
+    ports:
+      - "3200:3200"
+    environment:
+      - PORT=3200
+      - FILE_SERVICE_URL=http://file-service:3100
+    networks:
+      - app-network
+    depends_on:
+      - file-service
+
+networks:
+  app-network:
+    driver: bridge
