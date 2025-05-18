@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   file-service:
     build:
       context: ./file-service
@@ -26,6 +40,24 @@ services:
     depends_on:
       - file-service
 
+  data-service:
+    build:
+      context: ./data-service
+      dockerfile: Dockerfile
+    ports:
+      - "3300:3300"
+    environment:
+      - PORT=3300
+      - MONGODB_URI=mongodb://mongodb:27017/data-service
+    networks:
+      - app-network
+    depends_on:
+      - mongodb
+    restart: on-failure
+
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  mongodb_data:
