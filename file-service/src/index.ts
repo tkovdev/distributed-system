@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import routes from './routes';
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -8,18 +9,11 @@ app.use(express.json());
 
 // Simple health check endpoint
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', service: 'report-service' });
+  res.status(200).json({ status: 'ok', service: 'file-service' });
 });
 
-// Example report endpoint
-app.get('/files', (req: Request, res: Response) => {
-  res.status(200).json({
-    files: [
-      { id: 1, name: 'File name 1', date: new Date().toISOString() },
-      { id: 2, name: 'File name 2', date: new Date().toISOString() }
-    ]
-  });
-});
+// Mount all routes
+app.use(routes);
 
 // Start the server
 app.listen(PORT, () => {
