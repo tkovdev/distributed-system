@@ -35,10 +35,12 @@ services:
     environment:
       - PORT=3200
       - FILE_SERVICE_URL=http://file-service:3100
+      - DATA_SERVICE_URL=http://data-service:3300
     networks:
       - app-network
     depends_on:
       - file-service
+      - data-service
 
   data-service:
     build:
