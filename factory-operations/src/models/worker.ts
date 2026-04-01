@@ -2,7 +2,6 @@ import mongoose, { Schema } from 'mongoose';
 
 // Interface for Worker document
 export interface IWorker {
-  id: number;
   name: string;
   location: string;
   type: WorkerType;
@@ -30,7 +29,6 @@ export enum HumanWorkerShift {
 
 const WorkerSchema: Schema = new Schema(
   {
-  id: { type: Number, required: true, unique: true },
   name: { type: String, required: true },
   location: { type: String },
   type: { type: String, enum: Object.values(WorkerType), required: true }

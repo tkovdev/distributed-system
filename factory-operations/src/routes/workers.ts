@@ -27,9 +27,9 @@ const seedData = async (req: Request, res: Response): Promise<void> => {
 
     // Create sample workers
     const workers = [
-      { id: 1, name: 'Worker 1', location: 'US-East', type: 'human', shift: 'day' },
-      { id: 2, name: 'Worker 2', location: 'US-West', type: 'human', shift: 'night' },
-      { id: 3, name: 'Worker 3', location: 'EU-Central', type: 'robot', firmwareVersion: '1.0.0' }
+      { name: 'Worker 1', location: 'US-East', type: 'human', shift: 'day' },
+      { name: 'Worker 2', location: 'US-West', type: 'human', shift: 'night' },
+      { name: 'Worker 3', location: 'EU-Central', type: 'robot', firmwareVersion: '1.0.0' }
     ];
 
     await WorkerModel.insertMany(workers);
