@@ -9,13 +9,24 @@ const getFactories = async (req: Request, res: Response): Promise<void> => {
   try {
     const factories = await FactoryModel.aggregate([
         {
+          $lookup: {
+            from: "conveyors",
+            localField: "conveyors",
+            foreignField: "_id",
+            as: "conveyorDocs"
+          }
+        },
+        {
           $project: {
             name: 1,
             status: 1,
             location: 1,
-            conveyorCount: { $size: "$conveyors" }
+            conveyorCount: { $size: "$conveyors" },
+            totalCapacity: {
+              $sum: "$conveyorDocs.capacity"
+            }
           }
-      }
+        }
     ]);
 
     res.status(200).json({
@@ -63,13 +74,13 @@ const seedData = async (req: Request, res: Response): Promise<void> => {
     await ConveyorModel.deleteMany({});
 
     const conveyors: IConveyor[] = [
-      { name: 'Conveyor 1', status: 'active' },
-      { name: 'Conveyor 2', status: 'inactive' },
-      { name: 'Conveyor 3', status: 'maintenance' },
-      { name: 'Conveyor 4', status: 'active' },
-      { name: 'Conveyor 5', status: 'active' },
-      { name: 'Conveyor 6', status: 'maintenance' },
-      { name: 'Conveyor 7', status: 'active' }
+      { name: 'Conveyor 1', status: 'active', capacity: 100 },
+      { name: 'Conveyor 2', status: 'inactive', capacity: 150 },
+      { name: 'Conveyor 3', status: 'maintenance', capacity: 200 },
+      { name: 'Conveyor 4', status: 'active', capacity: 120 },
+      { name: 'Conveyor 5', status: 'active', capacity: 180 },
+      { name: 'Conveyor 6', status: 'maintenance', capacity: 160 },
+      { name: 'Conveyor 7', status: 'active', capacity: 140 }
     ];
     
     const insertedConveyors = await ConveyorModel.insertMany(conveyors);
