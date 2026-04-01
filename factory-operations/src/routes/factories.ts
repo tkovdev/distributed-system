@@ -22,6 +22,21 @@ const getFactories = async (req: Request, res: Response): Promise<void> => {
             status: 1,
             location: 1,
             conveyorCount: { $size: "$conveyors" },
+            effectiveCapacity: {
+              $sum: {
+                $map: {
+                  input: { 
+                    $filter: { 
+                      input: "$conveyorDocs", 
+                      as: "conveyor", 
+                      cond: { $eq: ["$$conveyor.status", "active"] }
+                    }
+                  },
+                  as: "conveyor",
+                  in: "$$conveyor.capacity"
+                }
+              }
+            },
             totalCapacity: {
               $sum: "$conveyorDocs.capacity"
             }
