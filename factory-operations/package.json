@@ -1,7 +1,9 @@
 {
-  "name": "data-service",
+  "name": "factory-operations",
   "version": "1.0.0",
-  "description": "",
+  "description": "ecapsulates all factory operations as a separate container, callable from other services & external sources",
+  "license": "ISC",
+  "author": "",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -9,8 +11,6 @@
     "dev": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
     "mongoose": "^7.0.3"

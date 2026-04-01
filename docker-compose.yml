@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:6.0
@@ -40,17 +38,17 @@ services:
       - app-network
     depends_on:
       - file-service
-      - data-service
+      - factory-operations
 
-  data-service:
+  factory-operations:
     build:
-      context: ./data-service
+      context: ./factory-operations
       dockerfile: Dockerfile
     ports:
       - "3300:3300"
     environment:
       - PORT=3300
-      - MONGODB_URI=mongodb://mongodb:27017/data-service
+      - MONGODB_URI=mongodb://mongodb:27017/factory-operations
     networks:
       - app-network
     depends_on:
