@@ -7,7 +7,17 @@ const router = express.Router();
 // Function to get all factories
 const getFactories = async (req: Request, res: Response): Promise<void> => {
   try {
-    const factories = await FactoryModel.find().populate('conveyors').exec();
+    const factories = await FactoryModel.aggregate([
+        {
+          $project: {
+            name: 1,
+            status: 1,
+            location: 1,
+            conveyorCount: { $size: "$conveyors" }
+          }
+      }
+    ]);
+
     res.status(200).json({
       factories
     });
@@ -36,7 +46,7 @@ const getFactoryConveyors = async (req: Request, res: Response): Promise<void> =
     res.status(200).json({
       conveyors: factory.conveyors || []
     });
-    
+
   } catch (error) {
     console.error('Error fetching factory conveyors:', error);
     res.status(500).json({ 
@@ -58,14 +68,15 @@ const seedData = async (req: Request, res: Response): Promise<void> => {
       { name: 'Conveyor 3', status: 'maintenance' },
       { name: 'Conveyor 4', status: 'active' },
       { name: 'Conveyor 5', status: 'active' },
-      { name: 'Conveyor 6', status: 'maintenance' }
+      { name: 'Conveyor 6', status: 'maintenance' },
+      { name: 'Conveyor 7', status: 'active' }
     ];
     
     const insertedConveyors = await ConveyorModel.insertMany(conveyors);
 
     // Create sample factories
     const factories: IFactory[] = [
-      { name: 'Factory 1', status: 'active', location: 'US-East', conveyors: [insertedConveyors[0]._id, insertedConveyors[1]._id] },
+      { name: 'Factory 1', status: 'active', location: 'US-East', conveyors: [insertedConveyors[0]._id, insertedConveyors[1]._id, insertedConveyors[6]._id] },
       { name: 'Factory 2', status: 'maintenance', location: 'US-West', conveyors: [insertedConveyors[2]._id, insertedConveyors[3]._id] },
       { name: 'Factory 3', status: 'active', location: 'EU-Central', conveyors: [insertedConveyors[4]._id, insertedConveyors[5]._id] }
     ];
