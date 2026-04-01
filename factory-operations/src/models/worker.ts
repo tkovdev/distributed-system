@@ -39,7 +39,7 @@ const WorkerSchema: Schema = new Schema(
   });
 
 // Create and export the Worker model
-export const WorkerModel = mongoose.model<IWorker>('Worker', WorkerSchema);
+export const WorkerModel = mongoose.model<IWorker>('Workers', WorkerSchema);
 
 // Human discriminator
 export const HumanWorkerModel = WorkerModel.discriminator<HumanWorker>(

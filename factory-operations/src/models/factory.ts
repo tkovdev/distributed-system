@@ -18,4 +18,4 @@ const FactorySchema: Schema = new Schema({
 });
 
 // Create and export the Factory model
-export const FactoryModel = mongoose.model<IFactory>('Factory', FactorySchema);
+export const FactoryModel = mongoose.model<IFactory>('Factories', FactorySchema);
