@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 // Interface for Factory document
-export interface IFactory extends Document {
+export interface IFactory {
   id: number;
   name: string;
   status?: string;
