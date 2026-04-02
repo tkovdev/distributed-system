@@ -4,6 +4,7 @@ import { connectToDatabase } from './db/connection';
 import { connectProducer, disconnectProducer } from './kafka/producer';
 import { startStateConsumer, disconnectConsumer } from './kafka/consumer';
 import { syncFactoriesToOrchestrator } from './kafka/sync';
+import { initializeTopics } from './kafka/topics';
 
 const app = express();
 const PORT = process.env.PORT || 3300;
@@ -21,6 +22,11 @@ app.use(routes);
 async function start(): Promise<void> {
   await connectToDatabase().catch(err => {
     console.error('Failed to connect to MongoDB', err);
+    process.exit(1);
+  });
+
+  await initializeTopics().catch(err => {
+    console.error('Failed to initialize Kafka topics', err);
     process.exit(1);
   });
 

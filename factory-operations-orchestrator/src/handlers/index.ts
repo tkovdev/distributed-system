@@ -1,5 +1,13 @@
 import { getFactory, upsertFactory, FactoryStateSnapshot, ConveyorState, ConveyorStatus } from '../state/factoryState';
 import { publishState } from '../kafka/producer';
+import { publishOperation } from '../kafka/operationsPublisher';
+import { subscribeToFactory, unsubscribeFromFactory } from '../kafka/operationsConsumer';
+import {
+  startFactoryContainers,
+  stopFactoryContainers,
+  startWorkerContainer,
+  stopWorkerContainer,
+} from '../docker/manager';
 
 export type CommandType =
   | 'START_FACTORY'
@@ -26,9 +34,9 @@ export const dispatchCommand = async (command: FactoryCommand): Promise<void> =>
     case 'REGISTER_FACTORY':
       return handleRegisterFactory(command);
     case 'START_FACTORY':
-      return handleStatusChange(command, 'active');
+      return handleStart(command);
     case 'STOP_FACTORY':
-      return handleStatusChange(command, 'inactive');
+      return handleStop(command);
     case 'RESET_FACTORY':
       return handleReset(command);
     case 'ASSIGN_WORKER':
@@ -70,6 +78,34 @@ async function handleRegisterFactory(command: FactoryCommand): Promise<void> {
   await publishState(snapshot);
 }
 
+async function handleStart(command: FactoryCommand): Promise<void> {
+  const factory = getFactory(command.factoryId);
+  if (!factory) {
+    console.warn(`Factory not found: ${command.factoryId}`);
+    return;
+  }
+  factory.status = 'active';
+  upsertFactory(factory);
+  await publishState(factory);
+  await subscribeToFactory(factory.factoryId);
+  await startFactoryContainers(factory);
+  await publishOperation(factory.factoryId, 'FACTORY_START');
+}
+
+async function handleStop(command: FactoryCommand): Promise<void> {
+  const factory = getFactory(command.factoryId);
+  if (!factory) {
+    console.warn(`Factory not found: ${command.factoryId}`);
+    return;
+  }
+  await publishOperation(factory.factoryId, 'FACTORY_STOP');
+  await stopFactoryContainers(factory);
+  await unsubscribeFromFactory(factory.factoryId);
+  factory.status = 'inactive';
+  upsertFactory(factory);
+  await publishState(factory);
+}
+
 async function handleStatusChange(
   command: FactoryCommand,
   status: 'active' | 'inactive' | 'maintenance'
@@ -95,6 +131,8 @@ async function handleReset(command: FactoryCommand): Promise<void> {
   factory.outputLevel = 1;
   upsertFactory(factory);
   await publishState(factory);
+  await stopFactoryContainers(factory);
+  await unsubscribeFromFactory(factory.factoryId);
 }
 
 async function handleAssignWorker(command: FactoryCommand): Promise<void> {
@@ -114,6 +152,8 @@ async function handleAssignWorker(command: FactoryCommand): Promise<void> {
   }
   upsertFactory(factory);
   await publishState(factory);
+  await startWorkerContainer(factory.factoryId, workerId, type);
+  await publishOperation(factory.factoryId, 'WORKER_ASSIGN', { workerId, workerType: type });
 }
 
 async function handleUnassignWorker(command: FactoryCommand): Promise<void> {
@@ -126,6 +166,8 @@ async function handleUnassignWorker(command: FactoryCommand): Promise<void> {
   factory.workers = factory.workers.filter(w => w.workerId !== workerId);
   upsertFactory(factory);
   await publishState(factory);
+  await stopWorkerContainer(factory.factoryId, workerId);
+  await publishOperation(factory.factoryId, 'WORKER_UNASSIGN', { workerId });
 }
 
 async function handleOutputChange(command: FactoryCommand, delta: number): Promise<void> {

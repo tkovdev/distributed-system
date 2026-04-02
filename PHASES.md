@@ -49,7 +49,7 @@
 
 ---
 
-## Phase 4 — Per-Factory Topics + Ephemeral Containers ⬜
+## Phase 4 — Per-Factory Topics + Ephemeral Containers ✅
 
 **Goal:** Implement the per-factory event stream and the logic inside `factory`, `conveyor`, and `worker` containers.
 

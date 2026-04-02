@@ -15,6 +15,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qg
     networks:
       - app-network
@@ -91,12 +92,41 @@ services:
       dockerfile: Dockerfile
     environment:
       - KAFKA_BROKER=kafka:29092
+      - DOCKER_NETWORK=distributed-system_app-network
+      - FACTORY_IMAGE=factory-process
+      - CONVEYOR_IMAGE=conveyor-process
+      - WORKER_IMAGE=worker-process
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - app-network
     depends_on:
       kafka:
         condition: service_healthy
     restart: on-failure
+
+  # Ephemeral process images — built by compose but never started directly.
+  # The orchestrator launches these dynamically via the Docker API.
+  factory-process:
+    build:
+      context: ./factory-operations/factory
+      dockerfile: Dockerfile
+    image: factory-process
+    profiles: [build-only]
+
+  conveyor-process:
+    build:
+      context: ./factory-operations/conveyor
+      dockerfile: Dockerfile
+    image: conveyor-process
+    profiles: [build-only]
+
+  worker-process:
+    build:
+      context: ./factory-operations/worker
+      dockerfile: Dockerfile
+    image: worker-process
+    profiles: [build-only]
 
 networks:
   app-network:
