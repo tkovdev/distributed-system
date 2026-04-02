@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Simple health check endpoint
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', service: 'data-service' });
+  res.status(200).json({ status: 'ok', service: 'factory-operations-api' });
 });
 
 // Mount all routes
@@ -24,7 +24,7 @@ app.use(routes);
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Data service running on port ${PORT}`);
+  console.log(`Factory operations API running on port ${PORT}`);
 });
 
 export default app;

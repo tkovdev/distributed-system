@@ -1,7 +1,7 @@
 {
-  "name": "factory-operations",
+  "name": "factory-operations-api",
   "version": "1.0.0",
-  "description": "ecapsulates all factory operations as a separate container, callable from other services & external sources",
+  "description": "Exposes all factory operations via API endpoints.",
   "license": "ISC",
   "author": "",
   "main": "dist/index.js",

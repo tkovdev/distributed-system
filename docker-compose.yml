@@ -38,11 +38,11 @@ services:
       - app-network
     depends_on:
       - file-service
-      - factory-operations
+      - factory-operations-api
 
-  factory-operations:
+  factory-operations-api:
     build:
-      context: ./factory-operations
+      context: ./factory-operations-api
       dockerfile: Dockerfile
     ports:
       - "3300:3300"
