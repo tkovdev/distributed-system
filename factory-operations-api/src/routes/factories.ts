@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { FactoryModel, IFactory } from '../models/factory';
 import { ConveyorModel, IConveyor } from '../models/conveyor';
+import { syncFactoriesToOrchestrator } from '../kafka/sync';
 
 const router = express.Router();
 
@@ -122,9 +123,24 @@ const seedData = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// POST /factories/sync — publishes REGISTER_FACTORY commands for all factories in MongoDB
+const syncFactories = async (req: Request, res: Response): Promise<void> => {
+  try {
+    await syncFactoriesToOrchestrator();
+    res.status(200).json({ message: 'Factories synced to orchestrator' });
+  } catch (error) {
+    console.error('Error syncing factories:', error);
+    res.status(500).json({
+      error: 'Failed to sync factories',
+      message: 'An internal server error occurred'
+    });
+  }
+};
+
 // Register routes
 router.get('/', getFactories);
 router.get('/:id/conveyors', getFactoryConveyors);
 router.post('/seed', seedData);
+router.post('/sync', syncFactories);
 
 export default router;
