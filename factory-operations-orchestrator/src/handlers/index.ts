@@ -1,4 +1,4 @@
-import { getFactory, upsertFactory, FactoryStateSnapshot } from '../state/factoryState';
+import { getFactory, upsertFactory, FactoryStateSnapshot, ConveyorState, ConveyorStatus } from '../state/factoryState';
 import { publishState } from '../kafka/producer';
 
 export type CommandType =
@@ -46,13 +46,22 @@ export const dispatchCommand = async (command: FactoryCommand): Promise<void> =>
 
 async function handleRegisterFactory(command: FactoryCommand): Promise<void> {
   const { factoryId, payload } = command;
+
+  const rawConveyors = (payload?.conveyors as Array<Record<string, unknown>> | undefined) ?? [];
+  const conveyors: ConveyorState[] = rawConveyors.map(c => ({
+    conveyorId: c.conveyorId as string,
+    name: c.name as string,
+    status: c.status as ConveyorStatus,
+    capacity: c.capacity as number,
+  }));
+
   const snapshot: FactoryStateSnapshot = {
     factoryId,
     name: (payload?.name as string) ?? factoryId,
     status: 'inactive',
     location: (payload?.location as string) ?? '',
     totalCapacity: (payload?.totalCapacity as number) ?? 0,
-    conveyors: [],
+    conveyors,
     workers: [],
     outputLevel: 1,
     lastUpdated: new Date().toISOString(),

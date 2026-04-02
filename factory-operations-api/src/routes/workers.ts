@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
-import { FactoryModel } from '../models/factory';
 import { WorkerModel } from '../models/worker';
+import { publishCommand } from '../kafka/producer';
+import { CommandType } from '../kafka/commandTypes';
 
 const router = express.Router();
 
@@ -50,5 +51,28 @@ const seedData = async (req: Request, res: Response): Promise<void> => {
 // Register routes
 router.get('/', getWorkers);
 router.post('/seed', seedData);
+
+// POST /workers/:workerId/assign/:factoryId
+router.post('/:workerId/assign/:factoryId', async (req: Request, res: Response): Promise<void> => {
+  const { workerId, factoryId } = req.params;
+  const worker = await WorkerModel.findById(workerId);
+  if (!worker) {
+    res.status(404).json({ error: 'Worker not found', workerId });
+    return;
+  }
+  const command = await publishCommand(CommandType.ASSIGN_WORKER, factoryId, {
+    workerId,
+    name: worker.name,
+    type: worker.type,
+  });
+  res.status(202).json({ commandId: command.commandId, type: command.type });
+});
+
+// POST /workers/:workerId/unassign/:factoryId
+router.post('/:workerId/unassign/:factoryId', async (req: Request, res: Response): Promise<void> => {
+  const { workerId, factoryId } = req.params;
+  const command = await publishCommand(CommandType.UNASSIGN_WORKER, factoryId, { workerId });
+  res.status(202).json({ commandId: command.commandId, type: command.type });
+});
 
 export default router;

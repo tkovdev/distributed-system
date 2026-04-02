@@ -2,6 +2,9 @@ import express, { Request, Response } from 'express';
 import { FactoryModel, IFactory } from '../models/factory';
 import { ConveyorModel, IConveyor } from '../models/conveyor';
 import { syncFactoriesToOrchestrator } from '../kafka/sync';
+import { publishCommand } from '../kafka/producer';
+import { getFactoryState, getAllFactoryStates } from '../kafka/consumer';
+import { CommandType } from '../kafka/commandTypes';
 
 const router = express.Router();
 
@@ -137,10 +140,62 @@ const syncFactories = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// GET /factories/state — returns latest state snapshot for all factories from cache
+const getFactoriesState = async (req: Request, res: Response): Promise<void> => {
+  res.status(200).json({ factories: getAllFactoryStates() });
+};
+
+// GET /factories/:id/state — returns latest state snapshot for a specific factory from cache
+const getFactoryStateById = async (req: Request, res: Response): Promise<void> => {
+  const state = getFactoryState(req.params.id);
+  if (!state) {
+    res.status(404).json({ error: 'No state found for factory', factoryId: req.params.id });
+    return;
+  }
+  res.status(200).json(state);
+};
+
+// POST /factories/:id/start
+const startFactory = async (req: Request, res: Response): Promise<void> => {
+  const command = await publishCommand(CommandType.START_FACTORY, req.params.id);
+  res.status(202).json({ commandId: command.commandId, type: command.type });
+};
+
+// POST /factories/:id/stop
+const stopFactory = async (req: Request, res: Response): Promise<void> => {
+  const command = await publishCommand(CommandType.STOP_FACTORY, req.params.id);
+  res.status(202).json({ commandId: command.commandId, type: command.type });
+};
+
+// POST /factories/:id/reset
+const resetFactory = async (req: Request, res: Response): Promise<void> => {
+  const command = await publishCommand(CommandType.RESET_FACTORY, req.params.id);
+  res.status(202).json({ commandId: command.commandId, type: command.type });
+};
+
+// POST /factories/:id/output/increase
+const increaseOutput = async (req: Request, res: Response): Promise<void> => {
+  const command = await publishCommand(CommandType.INCREASE_OUTPUT, req.params.id);
+  res.status(202).json({ commandId: command.commandId, type: command.type });
+};
+
+// POST /factories/:id/output/decrease
+const decreaseOutput = async (req: Request, res: Response): Promise<void> => {
+  const command = await publishCommand(CommandType.DECREASE_OUTPUT, req.params.id);
+  res.status(202).json({ commandId: command.commandId, type: command.type });
+};
+
 // Register routes
+router.get('/state', getFactoriesState);
 router.get('/', getFactories);
+router.get('/:id/state', getFactoryStateById);
 router.get('/:id/conveyors', getFactoryConveyors);
 router.post('/seed', seedData);
 router.post('/sync', syncFactories);
+router.post('/:id/start', startFactory);
+router.post('/:id/stop', stopFactory);
+router.post('/:id/reset', resetFactory);
+router.post('/:id/output/increase', increaseOutput);
+router.post('/:id/output/decrease', decreaseOutput);
 
 export default router;

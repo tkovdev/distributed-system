@@ -36,11 +36,12 @@
 
 ---
 
-## Phase 3 — API Routes Publish Commands ⬜
+## Phase 3 — API Routes Publish Commands ✅
 
 **Goal:** Wire `publishCommand()` into existing REST route handlers so HTTP actions flow into Kafka.
 
 ### Plan
+- `factories.ts` routes: GET requests (factory status) return the most recent message from kafka in the `factory.state` queue. Include 2 end-points, 1 for all factories and 1 for a specific factory.
 - `factories.ts` routes: POST actions (start, stop, reset, increase/decrease output) call `publishCommand()` and return the command acknowledgement
 - `workers.ts` routes: assign-worker action calls `publishCommand()`
 - Add shared command-type constants (e.g. `src/kafka/commandTypes.ts`)
