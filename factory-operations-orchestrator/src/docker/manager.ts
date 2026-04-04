@@ -48,6 +48,18 @@ async function stopContainer(name: string): Promise<void> {
   }
 }
 
+export async function stopWorkerContainer(factoryId: string, workerId: string): Promise<void> {
+  await stopContainer(containerName('worker', factoryId, workerId));
+}
+
+export async function stopConveyorContainer(factoryId: string, conveyorId: string): Promise<void> {
+  await stopContainer(containerName('conveyor', factoryId, conveyorId));
+}
+
+export async function stopFactoryContainer(factoryId: string): Promise<void> {
+  await stopContainer(containerName('factory', factoryId));
+}
+
 export async function startFactoryContainers(factory: FactoryStateSnapshot): Promise<void> {
   const { factoryId } = factory;
 
@@ -73,15 +85,11 @@ export async function startFactoryContainers(factory: FactoryStateSnapshot): Pro
 export async function stopFactoryContainers(factory: FactoryStateSnapshot): Promise<void> {
   const { factoryId } = factory;
 
-  await stopContainer(containerName('factory', factoryId));
-
-  for (const conveyor of factory.conveyors) {
-    await stopContainer(containerName('conveyor', factoryId, conveyor.conveyorId));
-  }
-
-  for (const worker of factory.workers) {
-    await stopContainer(containerName('worker', factoryId, worker.workerId));
-  }
+  await Promise.all([
+    stopFactoryContainer(factoryId),
+    ...factory.conveyors.map(c => stopConveyorContainer(factoryId, c.conveyorId)),
+    ...factory.workers.map(w => stopWorkerContainer(factoryId, w.workerId)),
+  ]);
 }
 
 export async function startWorkerContainer(
@@ -99,8 +107,4 @@ export async function startWorkerContainer(
       `WORKER_TYPE=${workerType}`,
     ]
   );
-}
-
-export async function stopWorkerContainer(factoryId: string, workerId: string): Promise<void> {
-  await stopContainer(containerName('worker', factoryId, workerId));
 }

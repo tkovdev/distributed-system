@@ -3,6 +3,8 @@ import { startCommandConsumer, disconnectConsumer } from './kafka/consumer';
 import { connectOperationsProducer, disconnectOperationsProducer } from './kafka/operationsPublisher';
 import { disconnectAllOperationsConsumers } from './kafka/operationsConsumer';
 import { initializeTopics } from './kafka/topics';
+import { getAllFactories } from './state/factoryState';
+import { stopFactoryContainers } from './docker/manager';
 
 async function start(): Promise<void> {
   await initializeTopics().catch(err => {
@@ -31,6 +33,12 @@ async function start(): Promise<void> {
 start();
 
 process.on('SIGTERM', async () => {
+  // Stop all ephemeral containers first
+  for (const factory of getAllFactories()) {
+    await stopFactoryContainers(factory).catch(err =>
+      console.warn(`Failed to stop containers for ${factory.factoryId}:`, err.message)
+    );
+  }    
   await disconnectProducer();
   await disconnectOperationsProducer();
   await disconnectConsumer();
