@@ -35,7 +35,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,7 +81,7 @@ services:
       - app-network
     depends_on:
       mongodb:
-        condition: service_started
+        condition: service_healthy
       kafka:
         condition: service_healthy
     restart: on-failure

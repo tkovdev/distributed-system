@@ -86,8 +86,18 @@ const getFactoryConveyors = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+// A destructive function that removes any existing factories, conveyors and workers (including their containers). Inserts new factory records and associated conveyors, then syncs to orchestrator so it has the latest state. 
+// Useful for testing and local development to reset to a known state with predictable IDs.
 const seedData = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Stop any running containers for existing factories before wiping the DB.
+    // New seed data gets new MongoDB _ids, so REGISTER_FACTORY won't find the old
+    // factories by their old IDs — we must explicitly stop them first.
+    const existingFactories = await FactoryModel.find({}, '_id').lean();
+    for (const factory of existingFactories) {
+      await publishCommand('STOP_FACTORY', factory._id.toString());
+    }
+
     // Clear existing data
     await FactoryModel.deleteMany({});
     await ConveyorModel.deleteMany({});
@@ -112,6 +122,8 @@ const seedData = async (req: Request, res: Response): Promise<void> => {
     ];
 
     await FactoryModel.insertMany(factories);
+
+    await syncFactoriesToOrchestrator();
 
     res.status(201).json({
       message: 'Database seeded successfully',
