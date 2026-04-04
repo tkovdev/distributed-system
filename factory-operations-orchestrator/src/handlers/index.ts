@@ -176,7 +176,7 @@ async function handleOutputChange(command: FactoryCommand, delta: number): Promi
     console.warn(`Factory not found: ${command.factoryId}`);
     return;
   }
-  factory.outputLevel = Math.max(1, factory.outputLevel + delta);
+  factory.outputLevel = Math.max(0, factory.outputLevel + delta);
   upsertFactory(factory);
   await publishState(factory);
 }
