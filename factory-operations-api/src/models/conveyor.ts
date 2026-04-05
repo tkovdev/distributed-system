@@ -15,4 +15,4 @@ const ConveyorSchema: Schema = new Schema({
 });
 
 // Create and export the Conveyor model
-export const ConveyorModel = mongoose.model<IConveyor>('Conveyors', ConveyorSchema);
+export const ConveyorModel = mongoose.model<IConveyor>('Conveyor', ConveyorSchema);

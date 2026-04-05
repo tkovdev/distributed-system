@@ -33,7 +33,7 @@ const PartSchema: Schema = new Schema({
 );
 
 // Create and export the Part model
-export const PartModel = mongoose.model<IPart>('Parts', PartSchema);
+export const PartModel = mongoose.model<IPart>('Part', PartSchema);
 
 export const DoDadPartModel = PartModel.discriminator<DoDadPart>(
   PartType.dodad,
