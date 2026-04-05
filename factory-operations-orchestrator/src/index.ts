@@ -1,29 +1,11 @@
-import { connectProducer, disconnectProducer } from './kafka/producer';
-import { startCommandConsumer, disconnectConsumer } from './kafka/consumer';
-import { connectOperationsProducer, disconnectOperationsProducer } from './kafka/operationsPublisher';
-import { disconnectAllOperationsConsumers } from './kafka/operationsConsumer';
-import { initializeTopics } from './kafka/topics';
-import { getAllFactories } from './state/factoryState';
-import { stopFactoryContainers } from './docker/manager';
+import { connect, disconnect } from './kafka';
+import { getAllFactories } from './state';
+import { stopFactoryContainers } from './docker';
+import { dispatchCommand } from './handlers';
 
 async function start(): Promise<void> {
-  await initializeTopics().catch(err => {
-    console.error('Failed to initialize Kafka topics', err);
-    process.exit(1);
-  });
-
-  await connectProducer().catch(err => {
-    console.error('Failed to connect Kafka producer', err);
-    process.exit(1);
-  });
-
-  await connectOperationsProducer().catch(err => {
-    console.error('Failed to connect Kafka operations producer', err);
-    process.exit(1);
-  });
-
-  await startCommandConsumer().catch(err => {
-    console.error('Failed to start Kafka command consumer', err);
+  await connect(dispatchCommand).catch(err => {
+    console.error('Failed to connect to Kafka', err);
     process.exit(1);
   });
 
@@ -38,10 +20,7 @@ process.on('SIGTERM', async () => {
     await stopFactoryContainers(factory).catch(err =>
       console.warn(`Failed to stop containers for ${factory.factoryId}:`, err.message)
     );
-  }    
-  await disconnectProducer();
-  await disconnectOperationsProducer();
-  await disconnectConsumer();
-  await disconnectAllOperationsConsumers();
+  }
+  await disconnect();
   process.exit(0);
 });

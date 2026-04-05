@@ -1,5 +1,5 @@
 import Dockerode from 'dockerode';
-import { FactoryStateSnapshot } from '../state/factoryState';
+import { FactoryStateSnapshot } from './state';
 
 const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
@@ -48,8 +48,37 @@ async function stopContainer(name: string): Promise<void> {
   }
 }
 
+export async function startWorkerContainer(
+  factoryId: string,
+  workerId: string,
+  workerType: string
+): Promise<void> {
+  await runContainer(
+    containerName('worker', factoryId, workerId),
+    WORKER_IMAGE,
+    [
+      `KAFKA_BROKER=${KAFKA_BROKER}`,
+      `FACTORY_ID=${factoryId}`,
+      `WORKER_ID=${workerId}`,
+      `WORKER_TYPE=${workerType}`,
+    ]
+  );
+}
+
 export async function stopWorkerContainer(factoryId: string, workerId: string): Promise<void> {
   await stopContainer(containerName('worker', factoryId, workerId));
+}
+
+export async function startConveyorContainer(factoryId: string, conveyorId: string): Promise<void> {
+  await runContainer(
+    containerName('conveyor', factoryId, conveyorId),
+    CONVEYOR_IMAGE,
+    [
+      `KAFKA_BROKER=${KAFKA_BROKER}`,
+      `FACTORY_ID=${factoryId}`,
+      `CONVEYOR_ID=${conveyorId}`,
+    ]
+  );
 }
 
 export async function stopConveyorContainer(factoryId: string, conveyorId: string): Promise<void> {
@@ -70,15 +99,7 @@ export async function startFactoryContainers(factory: FactoryStateSnapshot): Pro
   );
 
   for (const conveyor of factory.conveyors) {
-    await runContainer(
-      containerName('conveyor', factoryId, conveyor.conveyorId),
-      CONVEYOR_IMAGE,
-      [
-        `KAFKA_BROKER=${KAFKA_BROKER}`,
-        `FACTORY_ID=${factoryId}`,
-        `CONVEYOR_ID=${conveyor.conveyorId}`,
-      ]
-    );
+    await startConveyorContainer(factoryId, conveyor.conveyorId);
   }
 }
 
@@ -90,21 +111,4 @@ export async function stopFactoryContainers(factory: FactoryStateSnapshot): Prom
     ...factory.conveyors.map(c => stopConveyorContainer(factoryId, c.conveyorId)),
     ...factory.workers.map(w => stopWorkerContainer(factoryId, w.workerId)),
   ]);
-}
-
-export async function startWorkerContainer(
-  factoryId: string,
-  workerId: string,
-  workerType: string
-): Promise<void> {
-  await runContainer(
-    containerName('worker', factoryId, workerId),
-    WORKER_IMAGE,
-    [
-      `KAFKA_BROKER=${KAFKA_BROKER}`,
-      `FACTORY_ID=${factoryId}`,
-      `WORKER_ID=${workerId}`,
-      `WORKER_TYPE=${workerType}`,
-    ]
-  );
 }

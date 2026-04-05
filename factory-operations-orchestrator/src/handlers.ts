@@ -1,13 +1,8 @@
-import { getFactory, upsertFactory, FactoryStateSnapshot, ConveyorState, ConveyorStatus } from '../state/factoryState';
-import { publishState } from '../kafka/producer';
-import { publishOperation } from '../kafka/operationsPublisher';
-import { subscribeToFactory, unsubscribeFromFactory } from '../kafka/operationsConsumer';
-import {
-  startFactoryContainers,
-  stopFactoryContainers,
-  startWorkerContainer,
-  stopWorkerContainer,
-} from '../docker/manager';
+import { getFactory, upsertFactory, FactoryStateSnapshot, ConveyorState, ConveyorStatus } from './state';
+import { publishState, publishOperation, subscribeToFactory, unsubscribeFromFactory, FactoryCommand } from './kafka';
+import { startFactoryContainers, stopFactoryContainers, startWorkerContainer, stopWorkerContainer } from './docker';
+
+export type { FactoryCommand };
 
 export type CommandType =
   | 'START_FACTORY'
@@ -19,18 +14,10 @@ export type CommandType =
   | 'DECREASE_OUTPUT'
   | 'REGISTER_FACTORY';
 
-export interface FactoryCommand {
-  commandId: string;
-  type: CommandType;
-  factoryId: string;
-  payload?: Record<string, unknown>;
-  timestamp: string;
-}
-
 export const dispatchCommand = async (command: FactoryCommand): Promise<void> => {
   console.log(`[${command.type}] factoryId=${command.factoryId} commandId=${command.commandId}`);
 
-  switch (command.type) {
+  switch (command.type as CommandType) {
     case 'REGISTER_FACTORY':
       return handleRegisterFactory(command);
     case 'START_FACTORY':
@@ -48,7 +35,7 @@ export const dispatchCommand = async (command: FactoryCommand): Promise<void> =>
     case 'DECREASE_OUTPUT':
       return handleOutputChange(command, -1);
     default:
-      console.warn(`Unknown command type: ${(command as FactoryCommand).type}`);
+      console.warn(`Unknown command type: ${command.type}`);
   }
 };
 
@@ -102,20 +89,6 @@ async function handleStop(command: FactoryCommand): Promise<void> {
   await stopFactoryContainers(factory);
   await unsubscribeFromFactory(factory.factoryId);
   factory.status = 'inactive';
-  upsertFactory(factory);
-  await publishState(factory);
-}
-
-async function handleStatusChange(
-  command: FactoryCommand,
-  status: 'active' | 'inactive' | 'maintenance'
-): Promise<void> {
-  const factory = getFactory(command.factoryId);
-  if (!factory) {
-    console.warn(`Factory not found: ${command.factoryId}`);
-    return;
-  }
-  factory.status = status;
   upsertFactory(factory);
   await publishState(factory);
 }

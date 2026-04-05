@@ -155,15 +155,11 @@ distributed-system/
 │
 ├── factory-operations-orchestrator/    # Kafka consumer/producer + container manager
 │   └── src/
-│       ├── index.ts                    # Bootstrap
-│       ├── kafka/
-│       │   ├── client.ts
-│       │   ├── consumer.ts             # Consumes factory.command
-│       │   ├── producer.ts             # Publishes to factory.state
-│       │   └── operationsPublisher.ts  # Publishes to factory.<id>.operations
-│       ├── handlers/index.ts           # One handler per command type
-│       ├── state/factoryState.ts       # In-memory factory state store
-│       └── docker/manager.ts           # Dockerode — starts/stops containers
+│       ├── index.ts                    # Bootstrap: connect(dispatchCommand) → ready
+│       ├── kafka.ts                    # KafkaJS client, single producer, all consumers, topic init
+│       ├── handlers.ts                 # One handler per command type
+│       ├── state.ts                    # In-memory factory state store
+│       └── docker.ts                   # Dockerode — starts/stops containers
 │
 ├── factory-operations/                 # Ephemeral container source code
 │   ├── factory/                        # factory-process image
@@ -179,12 +175,12 @@ distributed-system/
 | What you want to change | Where |
 |-------------------------|-------|
 | Add a new REST endpoint | `factory-operations-api/src/routes/` |
-| Add a new command type | `factory-operations-api/src/kafka/commandTypes.ts` + handler in `factory-operations-orchestrator/src/handlers/index.ts` |
+| Add a new command type | `factory-operations-api/src/kafka/commandTypes.ts` + handler in `factory-operations-orchestrator/src/handlers.ts` |
 | Change what data is seeded | `routes/factories.ts` → `seedData()` / `routes/workers.ts` → `seedData()` |
 | Change factory/conveyor runtime behaviour | `factory-operations/factory/` or `factory-operations/conveyor/` |
 | Change worker runtime behaviour | `factory-operations/worker/` |
 | Add a field to a MongoDB model | `factory-operations-api/src/models/` |
-| Change how containers are started | `factory-operations-orchestrator/src/docker/manager.ts` |
+| Change how containers are started | `factory-operations-orchestrator/src/docker.ts` |
 | Add a new Kafka topic | Define in `docker-compose.yml` env vars (or rely on auto-create), add producer/consumer in the relevant service |
 
 ---
